@@ -11,7 +11,7 @@ double t;
 // Подынтергальная функция
 double function(double t)
 {
-    return 1 + pow(2 * t * x, 2);
+    return sin(t) / (0.1 + x * x);
 }
 
 
@@ -22,7 +22,7 @@ void main( void )
     double a = 0;             // нижний предел интегрирования
     double b = 1;             // верхний предел интегрирования
     double abserr = 1.0e-14;  // абсолютная погрешность
-    double relerr = 0;  // относительная погрешность
+    double relerr = 0;        // относительная погрешность
     
     double errest;            // оценка погрешности
     int nofun;                // количество вычислений подынтегральной функции
@@ -30,8 +30,8 @@ void main( void )
 
     // считаем в точках 0.1 + 0.2 * k при помощи QUANC8
     x = 0.1;
-    double results1[11];
-    for (int i = 0; i <= 10; i++)
+    double results1[10];
+    for (int i = 0; i <= 9; i++)
     {
         quanc8(function, a, b, abserr, relerr, &results1[i], &errest, &nofun, &flag);
         x += 0.2;
@@ -39,23 +39,23 @@ void main( void )
     x = 0;
 
     // вычислим X[i], Y[i] для полинома Лагранжа
-    double lagrangeX[11];
-    double lagrangeY[11];
+    double lagrangeX[10];
+    double lagrangeY[10];
 
     // вычислим X[i], Y[i] для сплайна
-    double splineX[12];
-    double splineY[12];
+    double splineX[11];
+    double splineY[11];
 
     double j = 0;
 
-    for (int i = 0; i <= 10; i++)
+    for (int i = 0; i <= 9; i++)
     {
         lagrangeX[i] = j;
         splineX[i + 1] = j;
         j += 0.2;
     }
 
-    for (int i = 0; i <= 10; i++)
+    for (int i = 0; i <= 9; i++)
     {
         quanc8(function, a, b, abserr, relerr, &lagrangeY[i], &errest, &nofun, &flag);
         quanc8(function, a, b, abserr, relerr, &splineY[i + 1], &errest, &nofun, &flag);
@@ -64,39 +64,42 @@ void main( void )
 
     // точка, в которой необходимо вычислить значения полином Лагранжа и сплайна, берём между узлами
     double tr = 0.1;
-    double results2[11];
+    double results2[10];
 
     // считаем в точках 0.1 + 0.2 * k при помощи полинома Лагранжа
-    for (int i = 0; i <= 10; i++)
+    for (int i = 0; i <= 9; i++)
     {
-        results2[i] = lagrange(11, lagrangeX, lagrangeY, tr);
+        results2[i] = lagrange(10, lagrangeX, lagrangeY, tr);
         tr += 0.2;
     }
 
     tr = 0.1;
-    double results3[11];
+    double results3[10];
 
     // вычислим коэффициенты для сплайна
-    double splineB[12], splineC[12], splineD[12];
-    spline(11, splineX, splineY, splineB, splineC, splineD);
+    double splineB[11], splineC[11], splineD[11];
+    spline(10, splineX, splineY, splineB, splineC, splineD);
 
-    // считаем в точках 0.1 + 0.2 * k при помощи полинома Лагранжа
-    for (int i = 0; i <= 10; i++)
+    // считаем в точках 0.1 + 0.2 * k при помощи сплайна
+    for (int i = 0; i <= 9; i++)
     {
-        results3[i] = seval(11, &tr, splineX, splineY, splineB, splineC, splineD);
+        results3[i] = seval(10, &tr, splineX, splineY, splineB, splineC, splineD);
         tr += 0.2;
     }
 
     // вывод
-    cout << "   x           QUANC8         Lagrange        Spline" << endl;
-    for (int i = 0; i <= 10; i++) {
-        cout.width(5);
-        cout << 0.1 + 0.2 * i << " ";
-        cout.width(15);
-        cout << results1[i] << " ";
-        cout.width(15);
-        cout << results2[i] << " ";
-        cout.width(15);
-        cout << results3[i] << endl;
+    printf("   x       ");
+    printf("QUANC8           ");
+    printf("Lagrange           ");
+    printf("Spline        ");
+    printf("Lagrange Error     ");
+    printf("Spline Error \n");
+    for (int i = 0; i <= 9; i++) {
+        printf("%5.1f ", (0.1 + 0.2 * i));
+        printf("%14.10f ", results1[i]);
+        printf("%17.10f ", results2[i]);
+        printf("%17.10f ", results3[i]);
+        printf("%17.10f ", abs(results2[i] - results1[i]));
+        printf("%17.10f \n", abs(results3[i] - results1[i]));
     }
 }
